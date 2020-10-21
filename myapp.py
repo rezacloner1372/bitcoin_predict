@@ -2,16 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import mysql.connector
-#print('connecting to db')
+from sklearn import tree , preprocessing
 mydb = mysql.connector.connect(
     user="kilid",
     password='123',
     host="127.0.0.1",
     database="db1"
 )
-#print('connected to db')
+x = []
+y = []
 now = datetime.now().strftime('%Y-%m-%d %H:%M:00')
-#print(now)
 mycursor = mydb.cursor()
 
 r = requests.get('https://www.coindesk.com/price/bitcoin')
@@ -30,6 +30,18 @@ for item in elements:
        MArket_cap_save = price.text
    elif (title.text).find('Volume (24h)') != -1:
        Volume_24H_save = price.text
-mycursor.execute("""INSERT INTO btc (dates, price, 24H_change, Market_Cap, Volume_24H) VALUES ('%s', '%s', '%s', '%s', '%s')""" % (now, price_save, change_save, MArket_cap_save, Volume_24H_save))
+sql = "INSERT INTO btc (dates, price, 24H_change, Market_Cap, Volume_24H) VALUES (%s, %s, %s, %s, %s)"
+val = (now, price_save, change_save, MArket_cap_save, Volume_24H_save)
+mycursor.execute(sql, val)
 mydb.commit()
 
+mycursor.execute("select * from btc where id = '10'")
+results = mycursor.fetchall()
+for row in results:
+    x.append(row[3:7])
+    y.append(row[2])
+print(x[0])
+print(y[0])
+clf = tree.DecisionTreeClassifier()
+labelencoder = preprocessing.LabelEncoder()
+clf = labelencoder.fit_transform(x , y)
